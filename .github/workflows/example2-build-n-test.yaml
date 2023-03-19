@@ -1,0 +1,30 @@
+name: Build and Test
+
+on:
+
+  workflow_call:
+    inputs:
+
+      name:
+        description: Name of the job
+        type: string
+
+      image:
+        description: Image Name
+        type: string
+
+jobs:
+
+  build:
+    uses: ./.github/workflows/example2-build.yaml
+    with:
+      name: ${{ inputs.name }}
+      image: ${{ inputs.image }}
+
+  test:
+    needs:
+      - build
+    uses: ./.github/workflows/example2-test.yaml
+    with:
+      name: ${{ inputs.name }}
+      image: ${{ inputs.image }}

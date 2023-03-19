@@ -1,0 +1,17 @@
+name: Checks
+
+on:
+
+  workflow_call:
+
+jobs:
+
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "Checking..."
+          sleep $(( $RANDOM % 10 + 1 ))
+          echo "Done"

@@ -1,0 +1,39 @@
+###############################################################################
+# Reuse workflows
+###############################################################################
+
+name: Example 2
+
+on:
+
+  push:
+
+jobs:
+
+  checks:
+    name: Checks
+    uses: ./.github/workflows/example2-checks.yaml
+    secrets: inherit
+
+  build-n-test:
+    name: Build and Test ${{ matrix.name }}
+    needs:
+      - checks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Variant 1
+            image: variant1-image
+
+          - name: Variant 2
+            image: variant2-image
+
+          - name: Variant 3
+            image: variant3-image
+
+    uses: ./.github/workflows/example2-build-n-test.yaml
+    secrets: inherit
+    with:
+      name: ${{ matrix.name }}
+      image: ${{ matrix.image }}
