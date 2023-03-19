@@ -1,0 +1,50 @@
+###############################################################################
+# Reuse workflows
+###############################################################################
+
+name: Example 3
+
+on:
+
+  push:
+
+jobs:
+
+  checks:
+    name: Checks
+    uses: ./.github/workflows/example2-checks.yaml
+    secrets: inherit
+
+  #
+  # Import matrix data for build-n-test job from yaml file.
+  # Data will then be pased to the matrix strategy context.
+  #
+  setup:
+    name: Setup the build matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.data }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Import matrix data
+        id: matrix
+        uses: jbutcher5/read-yaml@1.6
+        with:
+          file: ./.github/data/example3-matrix.yaml
+          key-path: '["build-n-test"]'
+      - run: echo "matrix:" ${{ steps.matrix.outputs.data }}
+
+  build-n-test:
+    name: ${{ matrix.name }}
+    needs:
+      - setup
+      - checks
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.setup.outputs.matrix)}}
+
+    uses: ./.github/workflows/example2-build-n-test.yaml
+    secrets: inherit
+    with:
+      name: ${{ matrix.name }}
+      image: ${{ matrix.image }}

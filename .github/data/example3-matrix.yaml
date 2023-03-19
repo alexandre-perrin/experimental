@@ -1,0 +1,11 @@
+build-n-test:
+  include:
+
+  - name: Variant 1
+    image: variant1-image
+
+  - name: Variant 2
+    image: variant2-image
+
+  - name: Variant 3
+    image: variant3-image
