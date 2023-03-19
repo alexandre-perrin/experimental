@@ -1,0 +1,30 @@
+###############################################################################
+# Reuse workflows
+###############################################################################
+
+name: Example 1
+
+on:
+
+  push:
+
+jobs:
+
+  checks:
+    name: Checks
+    uses: ./.github/workflows/example1-checks.yaml
+    secrets: inherit
+
+  build:
+    name: Build
+    needs:
+      - checks
+    uses: ./.github/workflows/example1-build.yaml
+    secrets: inherit
+
+  test:
+    name: Test
+    needs:
+      - build
+    uses: ./.github/workflows/example1-test.yaml
+    secrets: inherit

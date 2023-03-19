@@ -1,0 +1,23 @@
+name: Build
+
+on:
+
+  workflow_call:
+
+jobs:
+
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: Variant 1
+          - name: Variant 2
+          - name: Variant 3
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "Building ${{ matrix.name }}..."
+          sleep $(( $RANDOM % 10 + 1 ))
+          echo "Done"

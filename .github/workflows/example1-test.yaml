@@ -1,0 +1,23 @@
+name: Test
+
+on:
+
+  workflow_call:
+
+jobs:
+
+  test:
+    name: Test ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: Variant 1
+          - name: Variant 2
+          - name: Variant 3
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "Testing ${{ matrix.name }}..."
+          sleep $(( $RANDOM % 10 + 1 ))
+          echo "Done"
