@@ -1,0 +1,61 @@
+###############################################################################
+# Reuse workflows
+###############################################################################
+
+name: If Conditions
+
+on:
+
+  push:
+
+jobs:
+
+  task:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - run: |
+          echo failing...
+          exit 1
+
+  expected-always:
+
+    needs: [task]
+    runs-on: ubuntu-latest
+    if: true
+
+    steps:
+
+      - run: echo Run always.
+
+  expected-always-on-push:
+
+    needs: [task]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+
+      - run: echo Run on push even if failed.
+
+  always:
+
+    needs: [task]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+
+      - run: echo Run always.
+
+  push:
+
+    needs: [task]
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push'
+
+    steps:
+
+      - run: echo Run on push even if failed.
