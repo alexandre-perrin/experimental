@@ -1,0 +1,82 @@
+name: Release POC 1
+
+on:
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to release
+        required: true
+        default: v1.0
+
+  push:
+    branches:
+      - staging/**
+
+    tags:
+      - releases/*
+
+jobs:
+
+  trigger-release:
+
+    name: Trigger a release
+
+    runs-on: ubuntu-latest
+
+    # Runs on manual triggererd and main only
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Prepare staging branch
+        id: staging
+        run: |
+          STAGING_BASE=staging/${{ inputs.version }}
+          LAST_RC=$(git ls-remote --heads origin "${STAGING_BASE}-rc*" | cut -f 2 | sort -n | tail -1 | awk -F/ '{print $NF}')
+          LAST_RC=${LAST_RC:-1}
+          STAGING_BRANCH=${STAGING_BASE}-rc$(expr $LAST_RC + 1)
+          echo branch=$STAGING_BRANCH >> $GITHUB_OUTPUT
+
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git checkout -b ${STAGING_BRANCH}
+
+      - name: Push version
+        run: |
+          echo "VERSION=${{ inputs.version }}" > version.mk
+          git add version.mk
+          git commit -m "Bump version to ${{ inputs.version }}"
+          git push -u origin ${{ steps.staging.outputs.branch }}
+
+  release-test:
+
+    name: Test release candidate from staging
+
+    runs-on: ubuntu-latest
+
+    # Trigger only on push to staging
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/staging/')
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - run: echo Testing release
+
+  release-deploy:
+
+    name: Deploy release
+
+    runs-on: ubuntu-latest
+
+    needs: [release-test]
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: deploy release
+        uses: softprops/action-gh-release@v1
