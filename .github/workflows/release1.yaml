@@ -1,0 +1,109 @@
+name: Release POC 1
+
+on:
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to release
+        required: true
+        default: v1.0
+
+      branch:
+        description: The branch to tag
+
+jobs:
+
+  event-info:
+
+    name: Event info
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - run: |
+          cat <<EOF >> $GITHUB_STEP_SUMMARY
+          # Github context
+          \`\`\`json
+          ${{ toJSON(github) }}
+          \`\`\`
+          EOF
+
+  trigger-release:
+
+    name: Trigger a release
+
+    runs-on: ubuntu-latest
+
+    # Runs on manual triggererd and main only
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - name: Prepare staging branch
+        id: staging
+        run: |
+          set -x
+          STAGING_BASE=staging/${{ inputs.version }}
+          LAST_RC=$(git ls-remote --heads origin "${STAGING_BASE}-rc*" | cut -f 2 | sort -n | tail -1 | awk -F'-rc' '{print $NF}')
+          LAST_RC=${LAST_RC:-1}
+          STAGING_BRANCH=${STAGING_BASE}-rc$(expr $LAST_RC + 1)
+          echo branch=$STAGING_BRANCH >> $GITHUB_OUTPUT
+
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "${{ github.actor }}"
+          git checkout -b ${STAGING_BRANCH}
+
+      - name: Push version
+        run: |
+          echo "VERSION=${{ inputs.version }}" > version.mk
+          git add version.mk
+          git commit -m "Bump version to ${{ inputs.version }}"
+          git push -u origin ${{ steps.staging.outputs.branch }}
+
+      # Triggers a release with a workflow_dispatch event
+      # The ref is passed in the dispatch event which will naturally set
+      # `github.ref` to this value.
+      - name: Trigger release tasks
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: release1.yaml
+          ref: ${{ steps.staging.outputs.branch }}
+          inputs: '{"version":"${{ inputs.version }}","branch":"${{ steps.staging.outputs.branch }}"}'
+
+  release:
+
+    name: Test release candidate from staging
+
+    runs-on: ubuntu-latest
+
+    # Trigger only on release trigger
+    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/staging/')
+
+    steps:
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Test
+        run: |
+          echo Testing release:
+          cat version.mk | grep ${{ inputs.version }}
+
+      - name: Merge and tag
+        run: |
+          git checkout main
+          git pull
+          git merge --no-ff ${{ inputs.branch }}
+          git tag ${{ inputs.version }}
+          git push
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: New release ${{ inputs.version }}
+          tag_name: ${{ inputs.version }}
