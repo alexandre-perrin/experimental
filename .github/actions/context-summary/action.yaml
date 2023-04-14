@@ -1,0 +1,14 @@
+name: Context summary
+description: Creates a summary with github context json output for debug
+runs:
+  using: composite
+  steps:
+    - name: Create github context summary
+      shell: bash
+      run: |
+        cat <<EOF >> $GITHUB_STEP_SUMMARY
+        # Github context
+        \`\`\`json
+        ${{ toJSON(github) }}
+        \`\`\`
+        EOF
