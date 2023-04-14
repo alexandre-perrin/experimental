@@ -51,6 +51,7 @@ jobs:
       - name: Switch to release branch
         run: |
           git checkout release/v${{ inputs.major }} || git checkout -b release/v${{ inputs.major }}
+          git merge --no-ff main
           git push --set-upstream origin HEAD
 
       - name: Prepare staging branch
