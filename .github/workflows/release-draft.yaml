@@ -1,0 +1,90 @@
+# Inspired from thomaseizinger/github-action-gitflow-release-workflow
+
+name: Release POC 2 - Draft
+
+on:
+
+  workflow_dispatch:
+    inputs:
+
+      major:
+        description: The Major version
+        required: true
+        default: "1"
+
+      minor:
+        description: The Minor version
+        required: true
+        default: "0"
+
+      patch:
+        description: The Patch version
+        required: true
+        default: "0"
+
+jobs:
+
+  pre-release:
+
+    name: Start a pre-release
+
+    runs-on: ubuntu-latest
+
+    env:
+      TAG: 'v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}'
+      GITHUB_TOKEN: ${{ secrets.CI_PAT }}
+
+    steps:
+
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/context-summary
+
+      - name: Prepare git
+        uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          global: true
+          name: ${{ github.actor }}
+          email: ${{ github.actor }}@users.noreply.github.com
+          token: ${{ secrets.CI_PAT }}
+
+      - name: Switch to release branch
+        run: git checkout release/v${{ inputs.major }} || git checkout -b release/v${{ inputs.major }}
+
+      - name: Prepare staging branch
+        id: staging
+        run: |
+          set -x
+          STAGING_BASE=staging/${{ env.TAG }}-rc
+          LAST_RC=$(git ls-remote --quiet --heads origin "${STAGING_BASE}*" | wc -l)
+          LAST_RC=${LAST_RC:-0}
+          STAGING_BRANCH=${STAGING_BASE}$(expr $LAST_RC + 1)
+          echo STAGING_BRANCH=$STAGING_BRANCH >> $GITHUB_ENV
+
+          git checkout --track -b ${STAGING_BRANCH}
+
+      - name: Bump version
+        run: |
+          echo "VERSION=${{ env.TAG }}" > version.mk
+          git add version.mk
+          git commit -m "Bump version to ${{ env.TAG }}"
+
+      - name: Push to repo
+        run: |
+          echo SHA=$(git rev-parse HEAD) >> $GITHUB_ENV
+          git push --set-upstream origin HEAD
+
+      - name: Create pull request
+        uses: thomaseizinger/create-pull-request@1.0.0
+        with:
+          github-token: ${{ secrets.CI_PAT }}
+          head: ${{ env.STAGING_BRANCH }}
+          base: release/v${{ inputs.major }}
+          title: Release version ${{ env.TAG }}
+          body: |
+            Release ${{ env.TAG }} triggered from ${{ github.actor }}:
+
+            - workflow: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - commit: ${{ env.SHA }}
+
+            Merging this PR will create a GitHub release and upload any assets that are created as part of the release build.
