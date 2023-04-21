@@ -1,0 +1,54 @@
+name: Rebase Bot
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  list-pr:
+
+    name: List Pull Requests
+
+    runs-on: ubuntu-latest
+
+    outputs:
+
+      pulls: ${{ env.pulls }}
+
+    steps:
+
+      - name: GitHub List Pull Requests
+        uses: andrea-armstrong/github-list-pull-requests@v1.0.0
+        id: list
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          state: open
+
+      - run: |
+          pulls=$(echo "${{ steps.list.outputs.pullRequestNumbers }}" | jq -nR '[$str | split(" ")[] | {"pr": .}]')
+          echo pulls=${pulls} >> $GITHUB_ENV
+
+
+  rebase:
+
+    name: "Rebase pull request #${{ matrix.pr }}"
+
+    needs: [list-pr]
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.list-pr.outputs.pulls) }}
+
+    steps:
+      - name: Checkout the latest code
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Automatic Rebase
+        run: echo Rebasing ${{ matrix.pr }}
