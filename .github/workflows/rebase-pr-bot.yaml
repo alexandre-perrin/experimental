@@ -49,6 +49,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Configure git
+        run: |
+          git config --global --add safe.directory /github/workspace
+
       - name: Configure git credentials
         uses: OleksiyRudenko/gha-git-credentials@v2.1.1
         with:
@@ -56,6 +60,7 @@ jobs:
           name: ${{ github.actor }}
           actor: ${{ github.actor }}
           email: ${{ github.actor }}@users.noreply.github.com
+
 
       - name: Automatic Rebase
         uses: cirrus-actions/rebase@1.5
