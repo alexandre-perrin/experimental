@@ -7,20 +7,15 @@ on:
   workflow_dispatch:
     inputs:
 
-      major:
-        description: The Major version
+      indice:
+        description: Sementic version indice to increase
+        type: choice
+        options:
+          - MAJOR
+          - MINOR
+          - PATCH
+        default: PATCH
         required: true
-        default: "1"
-
-      minor:
-        description: The Minor version
-        required: true
-        default: "0"
-
-      patch:
-        description: The Patch version
-        required: true
-        default: "0"
 
 jobs:
 
@@ -31,7 +26,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAG: 'v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}'
       GITHUB_TOKEN: ${{ secrets.CI_PAT }}
 
     steps:
@@ -48,16 +42,36 @@ jobs:
           email: ${{ github.actor }}@users.noreply.github.com
           token: ${{ secrets.CI_PAT }}
 
+      - name: Bump version
+        run: |
+          echo Bumping ${{ inputs.indice }} to $VALUE, new version: ${VERSION}
+          source ./scripts/bump_version.sh ${{ inputs.indice }}
+          echo TAG=v${VERSION} >> $GITHUB_ENV
+          echo MAJOR=${MAJOR} >> $GITHUB_ENV
+          echo MINOR=${MINOR} >> $GITHUB_ENV
+          echo PATCH=${PATCH} >> $GITHUB_ENV
+
       - name: Switch to release branch
         run: |
-          git checkout release/v${{ inputs.major }} || git checkout -b release/v${{ inputs.major }}
+          BRANCH=release/v${MAJOR}
+          case ${{ inputs.indice }} in
+            MINOR)
+              BRANCH=${BRANCH}.${MINOR}
+              ;;
+            PATCH)
+              BRANCH=${BRANCH}.${MINOR}.${PATCH}
+              ;;
+            *)
+              ;;
+          esac
+          git checkout $BRANCH || git checkout -b $BRANCH
+          git pull
           git merge --no-ff main
           git push --set-upstream origin HEAD
 
       - name: Prepare staging branch
         id: staging
         run: |
-          set -x
           STAGING_BASE=staging/${{ env.TAG }}-rc
           LAST_RC=$(git ls-remote --quiet --heads origin "${STAGING_BASE}*" | wc -l)
           LAST_RC=${LAST_RC:-0}
@@ -66,11 +80,16 @@ jobs:
 
           git checkout --track -b ${STAGING_BRANCH}
 
-      - name: Bump version
+      - name: Updated version
         run: |
-          echo "VERSION=${{ env.TAG }}" > version.mk
+          sed \
+              -e "s/MAJOR\ =\ .*/MAJOR\ =\ $MAJOR/" \
+              -e "s/MINOR\ =\ .*/MINOR\ =\ $MINOR/" \
+              -e "s/PATCH\ =\ .*/PATCH\ =\ $PATCH/" \
+              -i version.mk
+
           git add version.mk
-          git commit -m "Bump version to ${{ env.TAG }}"
+          git commit -m "Bump version to ${VERSION}"
 
       - name: Push to repo
         run: |

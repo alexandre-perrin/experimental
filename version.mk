@@ -1,1 +1,3 @@
-VERSION=v1.0.0
+MAJOR = 6
+MINOR = 5
+PATCH = 1
