@@ -38,6 +38,10 @@ jobs:
       matrix:
         pr: ${{ fromJson(needs.list-pr.outputs.pulls) }}
 
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR_NUMBER: ${{ matrix.pr }}
+
     steps:
       - name: Checkout the latest code
         uses: actions/checkout@v2
@@ -45,9 +49,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
+      - name: Configure git credentials
+        uses: OleksiyRudenko/gha-git-credentials@v2.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: ${{ github.actor }}
+          actor: ${{ github.actor }}
+          email: ${{ github.actor }}@users.noreply.github.com
+
       - name: Automatic Rebase
         uses: cirrus-actions/rebase@1.5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ matrix.pr }}
-
