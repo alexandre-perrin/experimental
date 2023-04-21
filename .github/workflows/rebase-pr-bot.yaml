@@ -46,5 +46,8 @@ jobs:
           fetch-depth: 0
 
       - name: Automatic Rebase
-        run: echo Rebasing ${{ matrix.pr }}
+        uses: cirrus-actions/rebase@1.5
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PR_NUMBER: ${{ matrix.pr }}
 
