@@ -15,7 +15,7 @@ jobs:
 
     outputs:
 
-      pulls: ${{ env.pulls }}
+      pulls: ${{ steps.list.outputs.pullRequestNumbers }}
 
     steps:
 
@@ -25,11 +25,6 @@ jobs:
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           state: open
-
-      - run: |
-          pulls=$(echo "${{ steps.list.outputs.pullRequestNumbers }}" | jq -nR '[inputs | split(" ")[] | {"pr": .}]')
-          echo pulls=${pulls} >> $GITHUB_ENV
-
 
   rebase:
 
@@ -41,7 +36,7 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{ fromJson(needs.list-pr.outputs.pulls) }}
+        pr: ${{ fromJson(needs.list-pr.outputs.pulls) }}
 
     steps:
       - name: Checkout the latest code
