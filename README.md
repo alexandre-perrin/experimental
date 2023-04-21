@@ -9,3 +9,13 @@ This repository is intended to store some code experiments of any kind to share 
 > **Warning**
 >
 > Test of warning block
+
+> **warning**
+>
+> Test of warning block
+
+> **Warning**
+> Test of warning block single line
+
+> **warning**
+> Test of warning block single line
