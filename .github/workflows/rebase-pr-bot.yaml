@@ -48,6 +48,6 @@ jobs:
       - name: Automatic Rebase
         uses: cirrus-actions/rebase@1.5
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ matrix.pr }}
 
