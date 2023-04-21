@@ -27,7 +27,7 @@ jobs:
           state: open
 
       - run: |
-          pulls=$(echo "${{ steps.list.outputs.pullRequestNumbers }}" | jq -nR '[$str | split(" ")[] | {"pr": .}]')
+          pulls=$(echo "${{ steps.list.outputs.pullRequestNumbers }}" | jq -nR '[inputs | split(" ")[] | {"pr": .}]')
           echo pulls=${pulls} >> $GITHUB_ENV
 
 
