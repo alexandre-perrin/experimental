@@ -64,7 +64,5 @@ jobs:
 
       - name: Rebase
         run: |
-          git config pull.rebase true
           git rebase origin/main
-          git pull
-          git push origin HEAD
+          git push --force origin HEAD
