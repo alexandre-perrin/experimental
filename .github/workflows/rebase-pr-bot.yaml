@@ -43,12 +43,16 @@ jobs:
       PR_NUMBER: ${{ matrix.pr }}
 
     steps:
-      - name: "Checkout PR  #${{ matrix.pr}} head"
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.CI_PAT }}
           fetch-depth: 0
-          ref: refs/pull/${{ matrix.pr }}/head
+
+      - name: "Checkout PR  #${{ matrix.pr}}"
+        uses: dawidd6/action-checkout-pr@v1
+        with:
+          pr: ${{ matrix.pr}}
 
       - name: Configure git credentials
         uses: OleksiyRudenko/gha-git-credentials@v2.1.1
@@ -61,4 +65,4 @@ jobs:
       - name: Rebase
         run: |
           git rebase origin/main
-          git push --set-upstream origin HEAD
+          git push origin HEAD
