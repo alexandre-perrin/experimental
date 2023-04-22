@@ -43,15 +43,12 @@ jobs:
       PR_NUMBER: ${{ matrix.pr }}
 
     steps:
-      - name: Checkout the latest code
+      - name: "Checkout PR  #${{ matrix.pr}} head"
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.CI_PAT }}
           fetch-depth: 0
-
-      - name: Configure git
-        run: |
-          git config --global --add safe.directory /github/workspace
+          ref: refs/pull/${{ matrix.pr }}/head
 
       - name: Configure git credentials
         uses: OleksiyRudenko/gha-git-credentials@v2.1.1
