@@ -40,7 +40,6 @@ jobs:
 
     env:
       GITHUB_TOKEN: ${{ secrets.CI_PAT }}
-      PR_NUMBER: ${{ matrix.pr }}
 
     steps:
       - name: "Checkout"
