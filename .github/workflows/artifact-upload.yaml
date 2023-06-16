@@ -1,0 +1,22 @@
+###############################################################################
+# Reuse workflows
+###############################################################################
+
+name: Artifact upload ovewrite test
+
+on:
+
+  push:
+
+jobs:
+
+  upload:
+
+    runs-on: ubuntu-22.04
+    steps:
+      - run: echo "Some text" > example-artifact.txt
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: example-artifact
+          path: example-artifact.txt
